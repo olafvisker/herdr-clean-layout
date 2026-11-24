@@ -73,7 +73,7 @@ function icon(p, size, color) {
 }
 
 // A little one-eyed creature per agent, seeded by its address so it keeps its look.
-// The pupil glances around now and then (and follows the mouse on hover); the eye squashes flat to blink.
+// The pupil glances around now and then; the eye squashes flat to blink.
 // The reference image's gradients: blue into violet, violet, magenta into purple, and the odd green.
 const PALETTES = [
   ["#4a6bff", "#7b3dff"], ["#8a5cff", "#4b2fd6"], ["#e04ee0", "#7a3dff"], ["#b24dff", "#5a32e0"],
@@ -187,7 +187,7 @@ function animator(view, cx, keys) {
   view.gaze = new Map();
   cx.timer.every(1500, (cx) => {
     if (window()?.visible === false) return;
-    const shown = keys().filter((k) => k !== view.mouseKey);
+    const shown = keys();
     const blinks = shown.filter(() => Math.random() < 0.2);
     let moved = false;
     for (const k of shown) {
@@ -203,26 +203,6 @@ function animator(view, cx, keys) {
     cx.notify();
     if (blinks.length) cx.timer.after(130, (cx) => { for (const k of blinks) view.blinking.delete(k); cx.notify(); });
   });
-}
-
-// While the pointer is over an element, its creature looks at it. (ox, oy) is the eye's
-// spot in that element and (rx, ry) how far away counts as looking all the way.
-function follow(view, key, ox, oy, rx, ry) {
-  return (e, cx) => {
-    const q = (v) => Math.round(Math.max(-1, Math.min(1, v)) * 4) / 4;
-    const g = { x: q((e.local_position.x - ox) / rx), y: q((e.local_position.y - (oy ?? e.bounds.height / 2)) / ry) };
-    const old = view.gaze.get(key);
-    view.mouseKey = key;
-    if (old && old.x === g.x && old.y === g.y) return;
-    view.gaze.set(key, g);
-    cx.notify();
-  };
-}
-function unfollow(view, key, cx) {
-  if (view.mouseKey !== key) return;
-  view.mouseKey = null;
-  view.gaze.delete(key);
-  cx.notify();
 }
 
 export default class Agents extends View {
@@ -464,8 +444,6 @@ export default class Agents extends View {
           .items_center()
           .justify_center()
           .tooltip(`${nm} · ${a.status ?? "idle"}`)
-          .on_mouse_move(follow(this, a.address, 17, 17, 14, 14))
-          .on_hover((on, cx) => { if (!on) unfollow(this, a.address, cx); })
           .when(a.focused, (el) => el.bg(t.selected))
           .hover((s) => s.bg(t.hover))
           .on_click(() => run("pane.focus", { pane: a.pane }))
@@ -512,10 +490,8 @@ export default class Agents extends View {
         .on_hover((on, cx) => {
           if (on) this.hovered = a.address;
           else if (this.hovered === a.address) this.hovered = null;
-          if (!on) unfollow(this, a.address, cx);
           cx.notify();
         })
-        .on_mouse_move(follow(this, a.address, 15, 15, 40, 12))
         .on_click(() => run("pane.focus", { pane: a.pane }))
         .when(Boolean(pic), el => el.child(div().id(`agent-fold-${a.address}`)
           .when(subs.length > 0, el => el.on_click((_e, cx) => {

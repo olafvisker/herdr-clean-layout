@@ -37,7 +37,7 @@ function folder(cwd) {
 
 // Copied from my-agents (keep the two in sync) so a pane shows the same creature as the sidebar.
 // A little one-eyed creature per agent, seeded by its address so it keeps its look.
-// The pupil glances around now and then (and follows the mouse on hover); the eye squashes flat to blink.
+// The pupil glances around now and then; the eye squashes flat to blink.
 // The reference image's gradients: blue into violet, violet, magenta into purple, and the odd green.
 const PALETTES = [
   ["#4a6bff", "#7b3dff"], ["#8a5cff", "#4b2fd6"], ["#e04ee0", "#7a3dff"], ["#b24dff", "#5a32e0"],
@@ -151,7 +151,7 @@ function animator(view, cx, keys) {
   view.gaze = new Map();
   cx.timer.every(1500, (cx) => {
     if (window()?.visible === false) return;
-    const shown = keys().filter((k) => k !== view.mouseKey);
+    const shown = keys();
     const blinks = shown.filter(() => Math.random() < 0.2);
     let moved = false;
     for (const k of shown) {
@@ -167,26 +167,6 @@ function animator(view, cx, keys) {
     cx.notify();
     if (blinks.length) cx.timer.after(130, (cx) => { for (const k of blinks) view.blinking.delete(k); cx.notify(); });
   });
-}
-
-// While the pointer is over an element, its creature looks at it. (ox, oy) is the eye's
-// spot in that element and (rx, ry) how far away counts as looking all the way.
-function follow(view, key, ox, oy, rx, ry) {
-  return (e, cx) => {
-    const q = (v) => Math.round(Math.max(-1, Math.min(1, v)) * 4) / 4;
-    const g = { x: q((e.local_position.x - ox) / rx), y: q((e.local_position.y - (oy ?? e.bounds.height / 2)) / ry) };
-    const old = view.gaze.get(key);
-    view.mouseKey = key;
-    if (old && old.x === g.x && old.y === g.y) return;
-    view.gaze.set(key, g);
-    cx.notify();
-  };
-}
-function unfollow(view, key, cx) {
-  if (view.mouseKey !== key) return;
-  view.mouseKey = null;
-  view.gaze.delete(key);
-  cx.notify();
 }
 
 export default class Pane extends View {
@@ -240,8 +220,7 @@ export default class Pane extends View {
       .border_b(1)
       .border_color(t.border)
       .text_size(12)
-      .on_hover((hovered, cx) => { this.hovered = hovered; if (!hovered && agent) unfollow(this, agent.address, cx); cx.notify(); })
-      .when(Boolean(agent), (el) => el.on_mouse_move(follow(this, agent.address, 17, null, 60, 10)))
+      .on_hover((hovered, cx) => { this.hovered = hovered; cx.notify(); })
       .on_click(() => run("pane.focus", { pane }))
       .on_mouse_down("middle", (_e, cx) => { cx.stop_propagation(); run("pane.close", { pane }); })
       .when(Boolean(pic), (el) => el.child(pic))
