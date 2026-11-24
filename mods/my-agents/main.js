@@ -22,7 +22,7 @@ function toggleSidebar() {
   if (!narrow()) setShared("sidebar.width", width);
   // Mods edited before the rail went by width still read the flag.
   setShared("sidebar.collapsed", !narrow());
-  run("layout.resize", { id: "sidebar", px: narrow() ? (shared("sidebar.width") ?? 268) : window()?.platform === "macos" ? 76 : 44 });
+  run("layout.resize", { id: "sidebar", px: narrow() ? Math.max(177, shared("sidebar.width") ?? 268) : window()?.platform === "macos" ? 76 : 52 });
 }
 
 // Drops what an agent puts before its title: a status glyph or spinner and the separator

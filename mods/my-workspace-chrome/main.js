@@ -14,11 +14,25 @@ function find(node, id) {
 // The sidebar's rail goes by its width, not a flag: dragging its edge narrows it too.
 const narrow = () => (find(layout(), "sidebar")?.size?.px ?? Infinity) < 160;
 
+// Open, the sidebar is never narrower than this; anything less snaps to the rail.
+const MIN_OPEN = 177;
+const railPx = () => (window()?.platform === "macos" ? 76 : 52);
+
 // To the rail (on macOS wide enough for the traffic lights), or back to the width it had.
 function toggleSidebar() {
   const width = find(layout(), "sidebar")?.size?.px;
   if (!narrow()) setShared("sidebar.width", width);
-  run("layout.resize", { id: "sidebar", px: narrow() ? (shared("sidebar.width") ?? 233) : 52 });
+  run("layout.resize", { id: "sidebar", px: narrow() ? Math.max(MIN_OPEN, shared("sidebar.width") ?? 233) : railPx() });
+}
+
+// Dragging the edge below MIN_OPEN collapses it to the rail; dragging out from the rail
+// stays on the rail until it reaches MIN_OPEN. Runs on every render, so also mid-drag.
+function snapSidebar() {
+  const node = find(layout(), "sidebar");
+  const width = node?.size?.px;
+  if (width == null || node.hidden) return;
+  const rail = Math.max(railPx(), node.min ?? 0);
+  if (width < MIN_OPEN && Math.abs(width - rail) > 0.5) run("layout.resize", { id: "sidebar", px: rail });
 }
 
 export default class WorkspaceChrome extends View {
@@ -29,6 +43,7 @@ export default class WorkspaceChrome extends View {
       .on_mouse_down("left", (_e, cx) => cx.stop_propagation()).on_click(action).tooltip(tip).child(label);
   }
   render() {
+    if (!props()?.footer) snapSidebar();
     const t = theme();
     const collapsed = narrow();
     if (props()?.footer) {
