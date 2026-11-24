@@ -146,7 +146,7 @@ export default class Tabs extends View {
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
         }).child(svg(icon).size(14)).child(label);
     };
-    const sideHidden = Boolean(sidebar?.hidden) && (rail?.hidden ?? true);
+    const sideHidden = Boolean(sidebar?.hidden) && (!rail || Boolean(rail.hidden));
     return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().bg(t.chrome).when(Boolean(props()?.lines), el => el.border_b(1).border_color(t.border))
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => this.wheel(e))

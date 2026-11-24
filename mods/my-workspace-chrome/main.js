@@ -15,10 +15,14 @@ function find(node, id) {
 const narrow = () => Boolean(props()?.rail);
 
 // Collapse swaps the sidebar (min 177, resizable) for the fixed 52px rail, and back.
+// Herdr leaves "hidden" off a node that is shown.
+const railShown = () => { const r = find(layout(), "sidebar-rail"); return Boolean(r) && !r.hidden; };
+
 function toggleSidebar() {
-  const railShown = !(find(layout(), "sidebar-rail")?.hidden ?? true);
-  run("layout.hide", { id: railShown ? "sidebar-rail" : "sidebar" });
-  run("layout.show", { id: railShown ? "sidebar" : "sidebar-rail" });
+  const rail = railShown();
+    // Show first: hiding the node this button lives in can drop the commands after it.
+  run("layout.show", { id: rail ? "sidebar" : "sidebar-rail" });
+  run("layout.hide", { id: rail ? "sidebar-rail" : "sidebar" });
 }
 
 export default class WorkspaceChrome extends View {
@@ -30,7 +34,7 @@ export default class WorkspaceChrome extends View {
   }
   render() {
     // Ctrl+Shift+B shows the sidebar on its own; never leave the rail beside it.
-    if (!props()?.footer && !narrow() && !find(layout(), "sidebar")?.hidden && !(find(layout(), "sidebar-rail")?.hidden ?? true)) run("layout.hide", { id: "sidebar-rail" });
+    if (!props()?.footer && !narrow() && !find(layout(), "sidebar")?.hidden && railShown()) run("layout.hide", { id: "sidebar-rail" });
     // Saved widths from before the 177px minimum would otherwise stay narrow.
     if (!props()?.footer && !narrow() && (find(layout(), "sidebar")?.size?.px ?? 177) < 177) run("layout.resize", { id: "sidebar", px: 177 });
     const t = theme();
