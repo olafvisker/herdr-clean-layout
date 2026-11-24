@@ -7,6 +7,69 @@
   "type": "row",
   "children": [
     {
+      "id": "sidebar-rail",
+      "type": "column",
+      "children": [
+        {
+          "id": "brand-rail",
+          "type": "block",
+          "content": {
+            "mod": "my-workspace-chrome",
+            "props": {
+              "rail": true
+            }
+          },
+          "size": {
+            "px": 46
+          },
+          "window_drag": true
+        },
+        {
+          "id": "rail-lists",
+          "type": "column",
+          "children": [
+            {
+              "id": "spaces-rail",
+              "type": "block",
+              "content": {
+                "mod": "my-spaces",
+                "props": {
+                  "rail": true
+                }
+              },
+              "size": {
+                "weight": 1
+              },
+              "min": 90
+            },
+            {
+              "id": "agents-rail",
+              "type": "block",
+              "content": {
+                "mod": "my-agents",
+                "props": {
+                  "lines": true,
+                  "rail": true
+                }
+              },
+              "size": {
+                "weight": 1
+              },
+              "min": 90
+            }
+          ]
+        }
+      ],
+      "size": {
+        "px": 52
+      },
+      "min": 52,
+      "max": 52,
+      "hidden": true,
+      "background": "chrome",
+      "resizable": false
+    },
+    {
       "id": "sidebar",
       "type": "column",
       "children": [
@@ -70,7 +133,7 @@
       "size": {
         "px": 268
       },
-      "min": 52,
+      "min": 177,
       "max": 480,
       "background": "chrome",
       "resizable": false

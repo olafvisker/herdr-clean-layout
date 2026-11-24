@@ -8,7 +8,7 @@ A minimal, dark layout for [Herdr](https://herdr.dev) with a shadcn / Vercel-sty
 
 - **Dark theme** (`clean-dark`): near-black sidebar and tab bar, slightly lighter panes, soft grey text instead of pure white.
 - **Edge-to-edge panes**: no padding, no rounded corners, 1px dividers. The focused pane is marked by a lighter header, not an outline.
-- **Collapsible sidebar**: collapse it to an icon-only rail. The logo turns into the expand button on hover, spaces show as colored tiles, and agents show their program icon with a status badge.
+- **Collapsible sidebar**: drag it no narrower than 177px, or collapse it with the button to an icon-only rail. The logo turns into the expand button on hover, spaces show as colored tiles, and agents show their program icon with a status badge.
 - **Mouse shortcuts**
   - Middle-click a **tab** to close it.
   - Middle-click a **pane header** to close that pane.

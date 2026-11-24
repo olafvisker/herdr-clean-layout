@@ -127,10 +127,11 @@ export default class Tabs extends View {
         .when(c.status === "blocked" || c.status === "done", el => el.child(div().size(6).rounded(3).bg(t[c.status])))
         .when(c.active, el => el.child(div().id(`close-${c.id}`).text_color(t.dim).on_mouse_down("left", stop).tooltip("Close tab (Ctrl+Shift+W, or middle-click)").on_click((_e, cx) => { cx.stop_propagation(); run("tab.close", { id: c.id }); }).child(svg("mods/pane/close.svg").size(12))));
     };
-    const root = layout(), sidebar = find(root, "sidebar"), w = window();
-    // Old saved rails and a dragged-narrow sidebar can be smaller than the window buttons.
+    const root = layout(), sidebar = find(root, "sidebar"), rail = find(root, "sidebar-rail"), w = window();
+    const sideWidth = !sidebar?.hidden ? sidebar?.size?.px ?? 0 : rail && !rail.hidden ? rail.size?.px ?? 0 : 0;
+    // The rail can be smaller than the window buttons.
     const lightsPadding = w?.platform === "macos" && w.titlebar === "none" && !w.fullscreen && root?.traffic_lights
-      ? Math.max(10, (root.traffic_lights[0] + 64) / settings().zoom - (sidebar?.hidden ? 0 : sidebar?.size?.px ?? 0))
+      ? Math.max(10, (root.traffic_lights[0] + 64) / settings().zoom - sideWidth)
       : 10;
     const panel = find(root, "panel"), body = find(root, "panel-body");
     const enabled = shared("workspace.panels") ?? ["files", "changes"];
@@ -145,7 +146,7 @@ export default class Tabs extends View {
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
         }).child(svg(icon).size(14)).child(label);
     };
-    const sideHidden = Boolean(sidebar?.hidden);
+    const sideHidden = Boolean(sidebar?.hidden) && (rail?.hidden ?? true);
     return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().bg(t.chrome).when(Boolean(props()?.lines), el => el.border_b(1).border_color(t.border))
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => this.wheel(e))

@@ -11,28 +11,14 @@ function find(node, id) {
   return null;
 }
 
-// The sidebar's rail goes by its width, not a flag: dragging its edge narrows it too.
-const narrow = () => (find(layout(), "sidebar")?.size?.px ?? Infinity) < 160;
+// The rail is its own layout node ("sidebar-rail"); its copies of this mod get props.rail.
+const narrow = () => Boolean(props()?.rail);
 
-// Open, the sidebar is never narrower than this; anything less snaps to the rail.
-const MIN_OPEN = 177;
-const railPx = () => (window()?.platform === "macos" ? 76 : 52);
-
-// To the rail (on macOS wide enough for the traffic lights), or back to the width it had.
+// Collapse swaps the sidebar (min 177, resizable) for the fixed 52px rail, and back.
 function toggleSidebar() {
-  const width = find(layout(), "sidebar")?.size?.px;
-  if (!narrow()) setShared("sidebar.width", width);
-  run("layout.resize", { id: "sidebar", px: narrow() ? Math.max(MIN_OPEN, shared("sidebar.width") ?? 233) : railPx() });
-}
-
-// Dragging the edge below MIN_OPEN collapses it to the rail; dragging out from the rail
-// stays on the rail until it reaches MIN_OPEN. Runs on every render, so also mid-drag.
-function snapSidebar() {
-  const node = find(layout(), "sidebar");
-  const width = node?.size?.px;
-  if (width == null || node.hidden) return;
-  const rail = Math.max(railPx(), node.min ?? 0);
-  if (width < MIN_OPEN && Math.abs(width - rail) > 0.5) run("layout.resize", { id: "sidebar", px: rail });
+  const railShown = !(find(layout(), "sidebar-rail")?.hidden ?? true);
+  run("layout.hide", { id: railShown ? "sidebar-rail" : "sidebar" });
+  run("layout.show", { id: railShown ? "sidebar" : "sidebar-rail" });
 }
 
 export default class WorkspaceChrome extends View {
@@ -43,7 +29,10 @@ export default class WorkspaceChrome extends View {
       .on_mouse_down("left", (_e, cx) => cx.stop_propagation()).on_click(action).tooltip(tip).child(label);
   }
   render() {
-    if (!props()?.footer) snapSidebar();
+    // Ctrl+Shift+B shows the sidebar on its own; never leave the rail beside it.
+    if (!props()?.footer && !narrow() && !find(layout(), "sidebar")?.hidden && !(find(layout(), "sidebar-rail")?.hidden ?? true)) run("layout.hide", { id: "sidebar-rail" });
+    // Saved widths from before the 177px minimum would otherwise stay narrow.
+    if (!props()?.footer && !narrow() && (find(layout(), "sidebar")?.size?.px ?? 177) < 177) run("layout.resize", { id: "sidebar", px: 177 });
     const t = theme();
     const collapsed = narrow();
     if (props()?.footer) {

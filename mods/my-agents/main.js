@@ -13,16 +13,14 @@ function find(node, id) {
   return null;
 }
 
-// The sidebar's rail goes by its width, not a flag: dragging its edge narrows it too.
-const narrow = () => (find(layout(), "sidebar")?.size?.px ?? Infinity) < 160;
+// The rail is its own layout node ("sidebar-rail"); its copies of this mod get props.rail.
+const narrow = () => Boolean(props()?.rail);
 
-// To the rail (on macOS wide enough for the traffic lights), or back to the width it had.
+// Collapse swaps the sidebar (min 177, resizable) for the fixed 52px rail, and back.
 function toggleSidebar() {
-  const width = find(layout(), "sidebar")?.size?.px;
-  if (!narrow()) setShared("sidebar.width", width);
-  // Mods edited before the rail went by width still read the flag.
-  setShared("sidebar.collapsed", !narrow());
-  run("layout.resize", { id: "sidebar", px: narrow() ? Math.max(177, shared("sidebar.width") ?? 268) : window()?.platform === "macos" ? 76 : 52 });
+  const railShown = !(find(layout(), "sidebar-rail")?.hidden ?? true);
+  run("layout.hide", { id: railShown ? "sidebar-rail" : "sidebar" });
+  run("layout.show", { id: railShown ? "sidebar" : "sidebar-rail" });
 }
 
 // Drops what an agent puts before its title: a status glyph or spinner and the separator
