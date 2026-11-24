@@ -37,7 +37,3 @@ Herdr applies changes live, so no restart is needed.
 - The `my-*` mods are copies of Herdr's `tabs`, `pane`, `spaces`, `agents` and `workspace-chrome` mods with the changes above. Herdr never updates cloned mods, so they won't pick up upstream changes.
 - Made and tested on Herdr 0.1.18 (Windows). It uses only documented features, but other platforms are untested.
 - Want a different look? Edit the colors in `themes/clean-dark.json`.
-
-## Sharing
-
-To list it on herdr.dev/layouts, add the `herdr-layout` topic to the repo.
