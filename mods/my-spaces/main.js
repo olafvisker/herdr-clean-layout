@@ -3,7 +3,7 @@
 // its first terminal is in now, only where unusual: branch, ahead/behind. Agent state lives in the agents list, not here. Click to
 // switch, right-click for its menu, drag to reorder.
 
-import { View, div, svg } from "gpui-kit";
+import { View, div, svg, PathBuilder, Background } from "gpui-kit";
 import { v_flex, h_flex, ScrollHandle } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
 
@@ -66,6 +66,41 @@ const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b
 const EMOJI = /^(?:[#*0-9]\uFE0F?\u20E3|\p{Regional_Indicator}{2}|(?:\p{Emoji_Presentation}|(?=[\u{1F000}-\u{1FFFF}])\p{Extended_Pictographic}|\p{Extended_Pictographic}(?=\uFE0F)|\p{Emoji_Modifier_Base}(?=\p{Emoji_Modifier}))\uFE0F?[\p{Emoji_Modifier}\u{E0020}-\u{E007F}]*(?:\u200D\p{Extended_Pictographic}\uFE0F?\p{Emoji_Modifier}?)*)(?![\p{Grapheme_Extend}\p{Emoji_Modifier}\u200D])/u;
 function spaceAvatar(name) {
   return EMOJI.exec(name)?.[0] ?? ([...name][0]?.toUpperCase() ?? "?");
+}
+
+// A space's avatar: a rounded square with a soft diagonal gradient (lighter,
+// slightly warmer top left to deeper, cooler bottom right) in the space's color,
+// instead of a flat fill. Falls back to flat if the gradient can't be painted.
+function toHsl(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function fromHsl(h, s, l) {
+  h = ((h % 360) + 360) % 360; s = Math.min(1, Math.max(0, s)); l = Math.min(0.85, Math.max(0.2, l));
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return "#" + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("");
+}
+function avatar(fill, name, size, radius, fontSize) {
+  let body;
+  try {
+    const [h, s, l] = toHsl(fill);
+    const R = 28, P = (v) => `${v}%`;
+    const path = PathBuilder.fill()
+      .move_to(P(R), P(0)).line_to(P(100 - R), P(0)).curve_to(P(100), P(R), P(100), P(0))
+      .line_to(P(100), P(100 - R)).curve_to(P(100 - R), P(100), P(100), P(100))
+      .line_to(P(R), P(100)).curve_to(P(0), P(100 - R), P(0), P(100))
+      .line_to(P(0), P(R)).curve_to(P(R), P(0), P(0), P(0)).close().build();
+    body = globalThis.window.paint_path(path, Background.linear_gradient(135, fromHsl(h - 14, s, l + 0.1), fromHsl(h + 14, s, l - 0.1))).absolute().left(0).top(0).size(size);
+  } catch {
+    body = div().absolute().left(0).top(0).size(size).rounded(radius).bg(fill);
+  }
+  return h_flex().relative().size(size).flex_none().items_center().justify_center().text_size(fontSize).font_bold().text_color("#ffffff")
+    .child(body).child(div().relative().child(spaceAvatar(name)));
 }
 
 // A space speaks up only when something in it needs you.
@@ -514,7 +549,7 @@ export default class Spaces extends View {
           .gap(9)
           .items_center()
           .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).flex_none().text_color(t.dim)))
-          .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child(spaceAvatar(w.name))))
+          .when(!tree, el => el.child(avatar(fill, w.name, 18, 5, 10.5)))
           .child(div().flex_initial().min_w(SIDE_MIN).pt(1).truncate().text_color(t.foreground).child(w.name))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
       );
@@ -536,7 +571,7 @@ export default class Spaces extends View {
       .when(!w.active, (el) => el.hover((s) => s.bg(t.hover)))
       .on_click(() => run("space.select", { id: w.id }))
       .on_mouse_down("middle", (_e, cx) => { cx.stop_propagation(); run("space.close", { id: w.id }); })
-      .child(h_flex().size(22).rounded(6).bg(fill).items_center().justify_center().text_size(11).font_bold().text_color("#ffffff").child(spaceAvatar(w.name)))
+      .child(avatar(fill, w.name, 22, 6, 11))
       .when(Boolean(w.status) && w.status !== "idle", (el) => el.child(div().absolute().right(3).bottom(3).size(8).rounded_full().border(1.5).border_color(t.chrome).bg(w.status === "working" ? t.working : (t[w.status] ?? t.dim)))));
   }
 
