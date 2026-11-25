@@ -176,7 +176,7 @@
                   },
                   "background": "background",
                   "border": {
-                    "width": 0,
+                    "width": 1,
                     "color": "border"
                   },
                   "focus": {
@@ -184,11 +184,11 @@
                     "color": "border"
                   },
                   "radius": 0,
-                  "gap": 1,
+                  "gap": 0,
                   "lone": true
                 }
               },
-              "background": "border"
+              "background": "background"
             },
             {
               "id": "panel",

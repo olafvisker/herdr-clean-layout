@@ -5,6 +5,8 @@ const BINARY = /\.(png|jpe?g|gif|webp|bmp|ico|pdf|zip|gz|tar|7z|exe|dll|mp3|mp4|
 
 export function handleLink({ link }) {
   if (link.kind !== "file" || !link.path || BINARY.test(link.path)) return "pass";
+  // Folders (no extension on the last segment) go to the system file manager.
+  if (!/\.[^\\/.]+$/.test(link.path)) return "pass";
   setShared("files.open", { id: Date.now(), path: link.path, line: link.line ?? null });
   run("layout.select", { stack: "panel-body", child: "files" });
   run("layout.show", { id: "panel" });
