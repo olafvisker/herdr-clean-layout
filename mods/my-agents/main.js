@@ -501,6 +501,7 @@ export default class Agents extends View {
           .when(a.focused, (el) => el.bg(t.selected))
           .hover((s) => s.bg(t.hover))
           .on_click(() => run("pane.focus", { pane: a.pane }))
+          .on_mouse_down("middle", (_e, cx) => { cx.stop_propagation(); run("pane.close", { pane: a.pane }); })
           .child(pic ?? div().text_color(t.muted).child(nm[0]?.toUpperCase() ?? "?"))
           .when(a.status && a.status !== "idle", (el) => el.child(div().absolute().right(2).bottom(2).child(
             a.status === "working" ? svg("mods/my-workspace-chrome/spinner.svg").size(11).text_color(t.working).spin(900)
@@ -541,6 +542,7 @@ export default class Agents extends View {
         .when(a.focused, (el) => el.bg(t.selected))
         .cursor_pointer()
         .hover((s) => s.bg(t.hover))
+        .on_mouse_down("middle", (_e, cx) => { cx.stop_propagation(); this.hovered = null; run("pane.close", { pane: a.pane }); })
         .on_hover((on, cx) => {
           if (on) this.hovered = a.address;
           else if (this.hovered === a.address) this.hovered = null;

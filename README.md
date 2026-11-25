@@ -16,6 +16,7 @@ A minimal, dark layout for [Herdr](https://herdr.dev). Panes fill the whole wind
   - Middle-click a **tab** to close it.
   - Middle-click a **pane header** to close that pane.
   - Middle-click a **space** to close it (asks first).
+  - Middle-click an **agent** in the sidebar to close its pane.
   - Left-click the **+** after the last tab for a new terminal, right-click it for the full menu.
 - **Tooltips with hotkeys** on every icon button.
 - **Settings and Add machine** live in the top bar next to the window buttons. The window close button turns red on hover.
