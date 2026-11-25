@@ -138,13 +138,13 @@ export default class Tabs extends View {
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
-      return h_flex().id(`panel-${id}`).tooltip(`${label} panel`).h(26).px(8).gap(5).flex_none().items_center().rounded(6)
-        .text_size(12).bg(on ? t.selected : t.chrome).text_color(on ? t.foreground : t.muted)
-        .hover(s => s.bg(t.hover)).on_mouse_down("left", stop)
+      return h_flex().id(`panel-${id}`).tooltip(`${label} panel`).size(26).flex_none().items_center().justify_center().rounded(6)
+        .bg(on ? t.raised : t.chrome).text_color(on ? t.foreground : t.dim)
+        .hover(s => s.bg(t.hover).text_color(t.foreground)).on_mouse_down("left", stop)
         .on_click(() => {
           if (on) run("layout.hide", { id: "panel" });
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
-        }).child(svg(icon).size(14)).child(label);
+        }).child(svg(icon).size(15));
     };
     const sideHidden = Boolean(sidebar?.hidden) && (!rail || Boolean(rail.hidden));
     return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().bg(t.chrome).when(Boolean(props()?.lines), el => el.border_b(1).border_color(t.border))
@@ -156,8 +156,8 @@ export default class Tabs extends View {
         .children(shown.map(item))
         .child(button("tab-new", "+", () => run("tab.new"), "New tab (Ctrl+Shift+T), right-click for more")
           .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }); })))
-      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
-      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
+      .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/my-files/file.svg")))
+      .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/my-changes/changes.svg")))
       .child(button("add-machine", svg("mods/my-workspace-chrome/server.svg").size(15), () => run("mod.open", { name: "machine-add" }), "Add machine"))
       .child(button("settings", svg("mods/my-workspace-chrome/settings.svg").size(15), () => run("app.settings"), "Settings (Ctrl+,)"))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/my-tabs/win-min.svg").size(16) : "−", () => run("window.minimize"), "Minimize"))

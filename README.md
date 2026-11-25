@@ -27,14 +27,14 @@ Herdr's interface is just files, so installing is copying folders.
    - Windows: `%USERPROFILE%\.config\herdr-app`
    - macOS / Linux: `~/.config/herdr-app`
 
-   You should end up with `layouts/Clean.json`, `themes/clean-dark.json` and the five `mods/my-*` folders next to your existing files. Nothing is overwritten unless you already have files with those names.
+   You should end up with `layouts/Clean.json`, `themes/clean-dark.json` and the seven `mods/my-*` folders next to your existing files. Nothing is overwritten unless you already have files with those names.
 2. Switch to it: press `Ctrl+Shift+L` to cycle layouts, or pick **Clean** in Settings.
 
 Herdr applies changes live, so no restart is needed.
 
 ## Notes
 
-- It builds on Herdr's own mods (`files`, `changes`, `new-menu`, `menu`, ...), so those still need to be there. They ship with Herdr.
-- The `my-*` mods are copies of Herdr's `tabs`, `pane`, `spaces`, `agents` and `workspace-chrome` mods with the changes above. Herdr never updates cloned mods, so they won't pick up upstream changes.
+- It builds on Herdr's own mods (`new-menu`, `menu`, ...), so those still need to be there. They ship with Herdr.
+- The `my-*` mods are copies of Herdr's `tabs`, `pane`, `spaces`, `agents`, `workspace-chrome`, `files` and `changes` mods with the changes above. Herdr never updates cloned mods, so they won't pick up upstream changes.
 - Made and tested on Herdr 0.1.18 (Windows). It uses only documented features, but other platforms are untested.
 - Want a different look? Edit the colors in `themes/clean-dark.json`.
