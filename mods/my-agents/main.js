@@ -139,11 +139,38 @@ function hash(str) {
 }
 const shade = (c, f) => "#" + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * f).toString(16).padStart(2, "0")).join("");
 const mix = (a, b) => "#" + [1, 3, 5].map(i => Math.round((parseInt(a.slice(i, i + 2), 16) + parseInt(b.slice(i, i + 2), 16)) / 2).toString(16).padStart(2, "0")).join("");
+// Each space has its own color (space.colors, set in the spaces list); its agents
+// get gradients from that color's family, nudged in hue and lightness per agent, so
+// agents of one space look alike and different spaces are easy to tell apart.
+const SPACE_MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+function toHsl(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function fromHsl(h, s, l) {
+  h = ((h % 360) + 360) % 360; s = Math.min(1, Math.max(0, s)); l = Math.min(0.8, Math.max(0.25, l));
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return "#" + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("");
+}
+function familyPalette(space, r1, r2, r3) {
+  const color = (shared("space.colors") ?? {})[space] ?? "ansi6";
+  const base = color.startsWith("#") ? color : SPACE_MARK[color];
+  if (!base || base.length !== 7) return null;
+  const [h, s, l] = toHsl(base);
+  const h1 = h + (r1 - 0.5) * 30, dl = (r2 - 0.5) * 0.14;
+  return [fromHsl(h1, s, l + dl + 0.05), fromHsl(h1 + (r3 < 0.5 ? -1 : 1) * 24, s, l + dl - 0.1)];
+}
 function creature(a, size, closed = false, gaze = null) {
   const rnd = hash(a.address ?? "agent");
   const shape = SHAPES[Math.floor(rnd() * SHAPES.length)];
   // Green is the odd one out in the reference, so it only comes up about one time in twelve.
-  const [c1, c2] = rnd() < 0.08 ? PALETTES[PALETTES.length - 1] : PALETTES[Math.floor(rnd() * (PALETTES.length - 1))];
+  const [r1, r2, r3, r4] = [rnd(), rnd(), rnd(), rnd()];
+  const [c1, c2] = familyPalette(a.space, r1, r2, r3) ?? (r4 < 0.08 ? PALETTES[PALETTES.length - 1] : PALETTES[Math.floor(r1 * (PALETTES.length - 1))]);
   const angle = rnd() * 60 + 150;
   let body;
   try {
