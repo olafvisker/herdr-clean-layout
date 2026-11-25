@@ -167,7 +167,8 @@ export default class Tabs extends View {
         .child(button("tab-new", "+", () => run("tab.new"), "New tab (Ctrl+Shift+T), right-click for more")
           .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }); }))
         .when(Boolean(agent), el => el.child(button("agent-new", agent.tint ? svg(agent.icon).size(15).text_color(t.dim) : image(agent.icon).size(15),
-          () => run("tab.new", { name: agent.name, space: space?.id, argv: agent.run }), `New ${agent.name} (last used agent)`))))
+          () => run("tab.new", { name: agent.name, space: space?.id, argv: agent.run }), `New ${agent.name} (last used agent), right-click for other agents`)
+          .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }); }))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/my-files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/my-changes/changes.svg")))
       .child(button("add-machine", svg("mods/my-workspace-chrome/server.svg").size(15), () => run("mod.open", { name: "machine-add" }), "Add machine"))
