@@ -1,6 +1,6 @@
 # Herdr Clean
 
-A minimal, dark layout for [Herdr](https://herdr.dev) with a shadcn / Vercel-style palette. Panes fill the whole window, with thin dividers instead of cards, and the chrome stays out of your way.
+A minimal, dark layout for [Herdr](https://herdr.dev). Panes fill the whole window, with thin dividers instead of cards, and the chrome stays out of your way.
 
 ![Herdr Clean](docs/preview.png)
 

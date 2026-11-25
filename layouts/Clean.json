@@ -262,5 +262,8 @@
   "traffic_lights": [
     12,
     16
+  ],
+  "link_handlers": [
+    "my-files"
   ]
 }

@@ -3,5 +3,11 @@
   "cloned_from": {
     "name": "files",
     "version": "0.1.18"
-  }
+  },
+  "link_handlers": [
+    {
+      "kind": "file",
+      "pattern": "."
+    }
+  ]
 }

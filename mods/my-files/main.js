@@ -1,7 +1,7 @@
 // A lazy file browser for the focused pane's folder, with bounded read-only previews.
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, Editor, EditorState } from "gpui-base";
-import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window } from "herdr";
+import { spaces, panes, focused, exec, readTextFile, watchFolder, theme, settings, window, shared } from "herdr";
 
 // The panels share data in one VM, but their host tasks belong to separate copies.
 const scans = globalThis[Symbol.for("herdr.repoStatus.v2")] ??= new Map();
@@ -85,6 +85,7 @@ async function directory(path, on) {
 export default class Files extends View {
   init(_props, cx) {
     this.saved = new Map();
+    this.reqId = shared("files.open")?.id;
     this.wrap = localStorage.getItem("wrap") === "1";
     this.entries = new Map(); this.folders = new Set(); this.pending = new Set(); this.marks = {};
     this.refresh(cx);
@@ -232,12 +233,17 @@ export default class Files extends View {
   }
 
   show(path, cx) {
+    if (path && this.root) {
+      // A path inside the folder shown is kept relative so the breadcrumb and tree line up.
+      const p = path.replace(/\\/g, "/"), r = this.root.replace(/\\/g, "/").replace(/\/$/, "");
+      if (p.toLowerCase().startsWith(r.toLowerCase() + "/")) path = p.slice(r.length + 1);
+    }
     this.code?.release(); this.code = null; this.file = path; this.fileError = null;
     if (!path || !cx) return;
     const context = this.context, root = this.root, on = this.on;
     cx.spawn(async cx => {
       try {
-        const text = await readTextFile(`${root}/${path}`, { on });
+        const text = await readTextFile(/^([A-Za-z]:[\\/]|\/)/.test(path) ? path : `${root}/${path}`, { on });
         if (this.file !== path || !this.current(context)) return;
         if (text === null) { this.fileError = "This file is no longer available"; return; }
         if (text.includes("\0")) { this.fileError = "Binary file · no text preview"; return; }
@@ -248,6 +254,43 @@ export default class Files extends View {
       } catch { if (this.file === path && this.current(context)) this.fileError = "Cannot preview this file (binary, too large, or unreadable)"; }
       finally { cx.notify(); }
     });
+  }
+
+  // Back to the tree with every folder down to `dir` open.
+  reveal(dir, cx) {
+    this.show(null);
+    const parts = dir ? dir.split("/") : [];
+    for (let i = 1; i <= parts.length; i++) {
+      const folder = parts.slice(0, i).join("/");
+      if (!this.folders.has(folder)) this.toggle(folder, cx);
+    }
+    cx.notify();
+  }
+
+  crumb(id, label, t, onClick) {
+    const el = div().id(id).flex_none().px(4).h(22).flex().items_center().rounded(5).max_w(140).truncate();
+    return onClick
+      ? el.cursor_pointer().text_color(t.muted).hover(s => s.bg(t.hover).text_color(t.foreground)).on_click((_e, cx) => onClick(cx)).tooltip(label).child(label)
+      : el.text_color(t.foreground).child(label);
+  }
+
+  breadcrumb(t) {
+    const abs = /^([A-Za-z]:[\\/]|\/)/.test(this.file);
+    const rootName = this.root?.split(/[\\/]/).filter(Boolean).pop() ?? "Files";
+    const parts = this.file.split(/[\\/]/).filter(Boolean), name = parts.pop();
+    const items = [];
+    if (!abs) items.push(this.crumb("crumb-root", rootName, t, cx => this.reveal("", cx)));
+    let shown = parts;
+    if (parts.length > 2) { items.push(div().flex_none().px(2).text_color(t.dim).child("…")); shown = parts.slice(-2); }
+    const base = parts.length - shown.length;
+    shown.forEach((seg, i) => {
+      const dir = abs ? null : parts.slice(0, base + i + 1).join("/");
+      items.push(this.crumb(`crumb-${base + i}`, seg, t, cx => this.reveal(abs ? "" : dir, cx)));
+    });
+    items.push(this.crumb("crumb-file", name, t, null));
+    const out = [];
+    items.forEach((it, i) => { if (i) out.push(div().flex_none().child(svg("mods/my-files/chevron-right.svg").size(10).text_color(t.dim))); out.push(it); });
+    return h_flex().flex_1().min_w(0).overflow_hidden().gap(2).items_center().children(out);
   }
 
   rows(prefix, depth, out, t) {
@@ -269,13 +312,17 @@ export default class Files extends View {
   render(cx) {
     if (key() !== this.context?.key) this.refresh(cx);
     else this.refreshIfDue(cx);
+    const req = shared("files.open");
+    if (req && req.id !== this.reqId) { this.reqId = req.id; if (this.context) this.show(req.path, cx); }
     const t = theme();
     const font = this.code ? settings() : null;
     return v_flex().id("files").size_full().min_h(0).overflow_hidden().bg(t.background).border_l(1).border_color(t.border).text_color(t.foreground).text_size(12.5)
       .child(h_flex().h(30).flex_none().px(12).gap(8).items_center().border_b(1).border_color(t.border).bg(t.background).text_size(12)
-        .when(Boolean(this.file), el => el.child(div().id("files-back").w(20).cursor_pointer().text_color(t.muted).on_click((_e, cx) => { this.show(null); cx.notify(); }).child("←")))
-        .child(div().text_color(t.foreground).child("Files"))
-        .child(div().flex_1().min_w(0).truncate().text_right().text_size(12).text_color(t.dim).child(this.file ?? this.root?.split(/[\\/]/).pop() ?? ""))
+        .when(Boolean(this.file), el => el.child(div().id("files-back").size(24).flex_none().flex().items_center().justify_center().rounded(6).cursor_pointer().text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground)).tooltip("Back to files")
+          .on_click((_e, cx) => { this.show(null); cx.notify(); }).child(svg("mods/my-files/chevron-left.svg").size(14))))
+        .when(!this.file, el => el.child(div().text_color(t.foreground).child("Files"))
+          .child(div().flex_1().min_w(0).truncate().text_right().text_size(12).text_color(t.dim).child(this.root?.split(/[\\/]/).pop() ?? "")))
+        .when(Boolean(this.file), el => el.child(this.breadcrumb(t)))
         .when(Boolean(this.code), el => el.child(div().id("files-wrap").size(24).flex_none().flex().items_center().justify_center().rounded(6).cursor_pointer()
           .bg(this.wrap ? t.raised : t.background).text_color(this.wrap ? t.foreground : t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
           .tooltip(this.wrap ? "Turn off text wrapping" : "Wrap long lines")
@@ -285,7 +332,7 @@ export default class Files extends View {
         .when(Boolean(this.error) || !this.entries.get("")?.length, el => el.child(div().p(8).text_size(12).text_color(t.dim).child(this.error || (this.loading ? "Loading files…" : this.root ? "No files" : "No folder"))))
         .when(this.limited, el => el.child(div().p(8).text_size(11).text_color(t.dim).child("File list limited to 500 entries per folder and 5,000 total")))))
       .when(Boolean(this.file), el => el.child(this.code
-        ? Editor.new(this.code).font_family(font.font_family).text_size(font.font_size).flex_1().min_h(0)
+        ? div().flex_1().min_h(0).pl(10).child(Editor.new(this.code).font_family(font.font_family).text_size(font.font_size).size_full())
         : div().p(12).text_color(t.dim).child(this.fileError || "Loading file…")));
   }
 }
