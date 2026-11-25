@@ -85,6 +85,7 @@ async function directory(path, on) {
 export default class Files extends View {
   init(_props, cx) {
     this.saved = new Map();
+    this.wrap = localStorage.getItem("wrap") === "1";
     this.entries = new Map(); this.folders = new Set(); this.pending = new Set(); this.marks = {};
     this.refresh(cx);
     cx.timer.every(500, cx => this.refreshIfDue(cx));
@@ -241,7 +242,7 @@ export default class Files extends View {
         if (text === null) { this.fileError = "This file is no longer available"; return; }
         if (text.includes("\0")) { this.fileError = "Binary file · no text preview"; return; }
         const t = theme(), ext = path.includes(".") ? path.split(".").pop() : "txt";
-        this.code = EditorState.new({ language: LANG[ext] ?? ext, readonly: true,
+        this.code = EditorState.new({ language: LANG[ext] ?? ext, readonly: true, soft_wrap: this.wrap,
           value: text.length > 400000 ? text.slice(0, 400000) + "\n… (file truncated)" : text,
           syntax: { keyword: t.ansi5, string: t.ansi2, comment: t.dim, function: t.ansi4, type: t.ansi3, number: t.ansi1, constant: t.ansi6 } });
       } catch { if (this.file === path && this.current(context)) this.fileError = "Cannot preview this file (binary, too large, or unreadable)"; }
@@ -274,7 +275,12 @@ export default class Files extends View {
       .child(h_flex().h(30).flex_none().px(12).gap(8).items_center().border_b(1).border_color(t.border).bg(t.background).text_size(12)
         .when(Boolean(this.file), el => el.child(div().id("files-back").w(20).cursor_pointer().text_color(t.muted).on_click((_e, cx) => { this.show(null); cx.notify(); }).child("←")))
         .child(div().text_color(t.foreground).child("Files"))
-        .child(div().flex_1().min_w(0).truncate().text_right().text_size(12).text_color(t.dim).child(this.file ?? this.root?.split(/[\\/]/).pop() ?? "")))
+        .child(div().flex_1().min_w(0).truncate().text_right().text_size(12).text_color(t.dim).child(this.file ?? this.root?.split(/[\\/]/).pop() ?? ""))
+        .when(Boolean(this.code), el => el.child(div().id("files-wrap").size(24).flex_none().flex().items_center().justify_center().rounded(6).cursor_pointer()
+          .bg(this.wrap ? t.raised : t.background).text_color(this.wrap ? t.foreground : t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
+          .tooltip(this.wrap ? "Turn off text wrapping" : "Wrap long lines")
+          .on_click((_e, cx) => { this.wrap = !this.wrap; localStorage.setItem("wrap", this.wrap ? "1" : "0"); this.code.set_soft_wrap(this.wrap); cx.notify(); })
+          .child(svg("mods/my-files/wrap.svg").size(14)))))
       .when(!this.file, el => el.child(v_flex().id("files-tree").flex_1().min_h(0).overflow_y_scrollbar().p(6).children(this.rows("", 0, [], t))
         .when(Boolean(this.error) || !this.entries.get("")?.length, el => el.child(div().p(8).text_size(12).text_color(t.dim).child(this.error || (this.loading ? "Loading files…" : this.root ? "No files" : "No folder"))))
         .when(this.limited, el => el.child(div().p(8).text_size(11).text_color(t.dim).child("File list limited to 500 entries per folder and 5,000 total")))))
