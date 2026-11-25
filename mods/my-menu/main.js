@@ -11,8 +11,10 @@ export default class SilentMenu extends View {
     if (terminal) {
       run("terminal.right_click", { terminal, to: "program" });
       const sel = terminals().find(t => t.address === terminal)?.selection;
-      if (sel) { run("terminal.copy", { terminal }); run("terminal.clear_selection", { terminal }); }
-      else run("terminal.paste", { terminal });
+      // copy and paste take no arguments: they act on the focused terminal.
+      if (target.pane) run("pane.focus", { pane: target.pane });
+      if (sel) { run("terminal.copy"); run("terminal.clear_selection", { terminal }); }
+      else run("terminal.paste");
     }
     if (overlay) closeOverlay(overlay);
   }
