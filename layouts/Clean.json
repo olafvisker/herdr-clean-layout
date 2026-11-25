@@ -265,5 +265,6 @@
   ],
   "link_handlers": [
     "my-files"
-  ]
+  ],
+  "terminal_menu": "my-menu"
 }

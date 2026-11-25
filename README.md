@@ -10,6 +10,8 @@ A minimal, dark layout for [Herdr](https://herdr.dev). Panes fill the whole wind
 - **Edge-to-edge panes**: no padding, no rounded corners, 1px dividers. The focused pane is marked by a lighter header, not an outline.
 - **Collapsible sidebar**: drag it no narrower than 177px, or collapse it with the button to an icon-only rail. The logo turns into the expand button on hover, spaces show as colored tiles, and agents show their program icon with a status badge.
 - **Agent creatures**: every agent gets its own little one-eyed creature instead of a program icon, in the sidebar and in its pane header. Shape and color are picked from its address, so it keeps its look. Now and then it blinks or glances around.
+- **Right-click** in a terminal copies the selection or pastes, with no menu (`my-menu`).
+- **Add agent** button next to the + starts the last agent you opened.
 - **Mouse shortcuts**
   - Middle-click a **tab** to close it.
   - Middle-click a **pane header** to close that pane.
@@ -27,7 +29,7 @@ Herdr's interface is just files, so installing is copying folders.
    - Windows: `%USERPROFILE%\.config\herdr-app`
    - macOS / Linux: `~/.config/herdr-app`
 
-   You should end up with `layouts/Clean.json`, `themes/clean-dark.json` and the seven `mods/my-*` folders next to your existing files. Nothing is overwritten unless you already have files with those names.
+   You should end up with `layouts/Clean.json`, `themes/clean-dark.json` and the `mods/my-*` folders next to your existing files. Nothing is overwritten unless you already have files with those names.
 2. Switch to it: press `Ctrl+Shift+L` to cycle layouts, or pick **Clean** in Settings.
 
 Herdr applies changes live, so no restart is needed.

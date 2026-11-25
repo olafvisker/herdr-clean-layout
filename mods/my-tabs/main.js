@@ -134,7 +134,8 @@ export default class Tabs extends View {
       ? Math.max(10, (root.traffic_lights[0] + 64) / settings().zoom - sideWidth)
       : 10;
     const panel = find(root, "panel"), body = find(root, "panel-body");
-    const enabled = shared("workspace.panels") ?? ["files", "changes"];
+    // Always both panels: the welcome screen can leave shared("workspace.panels") empty, which hid them.
+    const enabled = ["files", "changes"];
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -146,6 +147,15 @@ export default class Tabs extends View {
           else { run("layout.select", { stack: "panel-body", child: id }); run("layout.show", { id: "panel" }); }
         }).child(svg(icon).size(15));
     };
+    // The agent the "add agent" button starts: the last one opened (remembered).
+    const agentPanes = panes().filter(p => p.program?.agent && p.program.key);
+    if (!this.seen) {
+      this.seen = new Set(agentPanes.map(p => p.pane));
+      if (!localStorage.getItem("lastAgent") && agentPanes.length) localStorage.setItem("lastAgent", agentPanes[agentPanes.length - 1].program.key);
+    } else for (const p of agentPanes) if (!this.seen.has(p.pane)) { this.seen.add(p.pane); localStorage.setItem("lastAgent", p.program.key); }
+    const known = shared("new-menu.agents")?.[space?.machine ?? ""] ?? [];
+    const lastKey = localStorage.getItem("lastAgent");
+    const agent = known.find(a => a.key === lastKey && a.installed) ?? known.find(a => a.installed);
     const sideHidden = Boolean(sidebar?.hidden) && (!rail || Boolean(rail.hidden));
     return h_flex().size_full().min_w(0).px(10).pl(lightsPadding).gap(3).items_center().bg(t.chrome).when(Boolean(props()?.lines), el => el.border_b(1).border_color(t.border))
       .on_mouse_up("left", () => { this.pressed = null; })
@@ -155,7 +165,9 @@ export default class Tabs extends View {
         .on_size_change((_size, cx) => { if (active >= 0) { this.scroll.scroll_to_item(active); cx.notify(); } })
         .children(shown.map(item))
         .child(button("tab-new", "+", () => run("tab.new"), "New tab (Ctrl+Shift+T), right-click for more")
-          .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }); })))
+          .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }); }))
+        .when(Boolean(agent), el => el.child(button("agent-new", agent.tint ? svg(agent.icon).size(15).text_color(t.dim) : image(agent.icon).size(15),
+          () => run("tab.new", { name: agent.name, space: space?.id, argv: agent.run }), `New ${agent.name} (last used agent)`))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/my-files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/my-changes/changes.svg")))
       .child(button("add-machine", svg("mods/my-workspace-chrome/server.svg").size(15), () => run("mod.open", { name: "machine-add" }), "Add machine"))
