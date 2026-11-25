@@ -194,12 +194,12 @@ function creature(a, size, closed = false, gaze = null) {
     .when(blush, (el) => el.child(div().absolute().left(ex - 1).top(ey + eh - 1).w(3).h(1.5).rounded_full().bg("#f0a0b860")))
     // The eye is a dark tint of the body; a slightly smaller black circle sits against one side,
     // leaving a moon-shaped sliver of that tint on the other.
-    .child(div().absolute().left(ex).w(ew).rounded_full().bg(shade(c2, 0.42)).overflow_hidden()
+    .child(div().id(`eye-${a.address}-${size}`).absolute().left(ex).w(ew).rounded_full().bg(shade(c2, 0.42)).overflow_hidden()
       .top(closed ? ey + (eh - blinkH) / 2 : ey).h(closed ? blinkH : eh)
       .transition("top", { duration: 70, easing: "ease-in" }).transition("height", { duration: 70, easing: "ease-in" })
       .child(div().absolute().w(ew * 0.84).h(eh * 0.86).rounded_full().bg("#0e0e14")
         .top(eh * 0.07).when(moonRight, (el) => el.left(0)).when(!moonRight, (el) => el.left(ew * 0.16)))
-      .child(div().absolute().w(pw).h(ph).rounded_full().bg("#ffffff")
+      .child(div().id(`pupil-${a.address}-${size}`).absolute().w(pw).h(ph).rounded_full().bg("#ffffff")
         // Rests where it looks (gaze -1..1 on each axis) and glides there natively: no
         // continuous motion, so no pixel jitter at this size.
         .left(mx * (1 + 0.5 * (gaze?.x ?? 0))).top(my * (1 + 0.5 * (gaze?.y ?? 0)))
