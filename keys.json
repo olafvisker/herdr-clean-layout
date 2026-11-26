@@ -1,0 +1,8 @@
+{
+  "global": {
+    "ctrl-w": "pane.close"
+  },
+  "terminal": {
+    "ctrl-w": "pane.close"
+  }
+}

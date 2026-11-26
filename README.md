@@ -18,6 +18,7 @@ A minimal, dark layout for [Herdr](https://herdr.dev). Panes fill the whole wind
   - Middle-click a **space** to close it (asks first).
   - Middle-click an **agent** in the sidebar to close its pane.
   - Left-click the **+** after the last tab for a new terminal, right-click it for the full menu.
+- **Ctrl+W** closes the current pane (and its tab, once it's the last pane). This takes Ctrl+W from terminal programs (readline's delete-word); Ctrl+Backspace still deletes a word.
 - **Tooltips with hotkeys** on every icon button.
 - **Settings and Add machine** live in the top bar next to the window buttons. The window close button turns red on hover.
 - No status bar, and a bit of breathing room between the items in the spaces and agents lists.
@@ -31,7 +32,8 @@ Herdr's interface is just files, so installing is copying folders.
    - macOS / Linux: `~/.config/herdr-app`
 
    You should end up with `layouts/Clean.json`, `themes/clean-dark.json` and the `mods/my-*` folders next to your existing files. Nothing is overwritten unless you already have files with those names.
-2. Switch to it: press `Ctrl+Shift+L` to cycle layouts, or pick **Clean** in Settings.
+2. Merge `keys.json` into your own (it binds `ctrl-w` to `pane.close`).
+3. Switch to it: press `Ctrl+Shift+L` to cycle layouts, or pick **Clean** in Settings.
 
 Herdr applies changes live, so no restart is needed.
 
